@@ -1,0 +1,114 @@
+#!/bin/bash
+#Autor: Òscar Herran i Morueco
+tria_directori()
+{
+DIRECTORI=$(zenity --file-selection --title="Trieu un directori per a la baixada" --directory)
+ans=$?
+if [ $ans -eq 0 ]; then
+zenity --info \
+                    --title="Informació" \
+                    --text="S'ha seleccionat ${DIRECTORI}" \
+                    --checkbox="D'acord" \
+                    --width=900
+url
+else
+zenity --error \
+                    --title="Error!" \
+                    --text="No s'ha seleccionat cap directori!" \
+                    --checkbox="D'acord" \
+                    --width=300       
+fi
+}
+url()
+{
+
+URL=$(zenity --forms --width=300 --height=100 --title="Baixada automàtica" --add-entry="Enganxeu l'URL del vídeo"  --text="Baixeu vídeos del YouTube o del Vimeo" \n\n)
+if [ -z $URL ]; then
+zenity --error \
+                    --title="Error!" \
+                    --text="No s'ha intrduït cap URL" \
+                    --checkbox="D'acord" \
+                    --width=300
+exit 1
+else
+tria_format
+fi
+}
+tria_format()
+{
+
+FORMAT=$(zenity --list \
+                    --title="Format" \
+                    --height=200 \
+                    --width=100 \
+                    --ok-label="D'acord" \
+                    --cancel-label="Cancel·la" \
+                    --text="Trieu el format de la baixada" \
+                    --radiolist \
+                    --column="" \
+                    --column="Componente" \
+                    1 "mp3" 2 "mp4")
+ans=$?
+if [ $ans -eq 0 ]
+then
+zenity --info \
+                    --title="Informació" \
+                    --text="Heu triat ${FORMAT}" \
+                    --checkbox="D'acord" \
+                    --width=300
+    if [ $FORMAT == mp3 ]; then
+    baixa_mp3
+    else
+    baixa_mp4
+    fi
+
+else
+zenity --error \
+                    --title="Error!" \
+                    --text="No s'ha triat cap format" \
+                    --checkbox="D'acord" \
+                    --width=300
+exit 1
+fi
+}
+
+baixa_mp3()
+{
+youtube-dl --extract-audio --audio-format mp3 "$URL" -o $DIRECTORI/"%(title)s".$FORMAT
+}
+
+baixa_mp4()
+{
+youtube-dl -f $FORMAT -q "$URL" -o $DIRECTORI/"%(title)s".$FORMAT
+}
+
+
+comprova_connexio()
+{    
+if nc -zw1 google.com 443; then
+  comprova_programa
+else
+zenity --error \
+                    --title="Error!" \
+                    --text="Comproveu la connexió a internet!" \
+                    --checkbox="D'acord" \
+                    --width=300
+exit 1
+fi
+}
+
+comprova_programa()
+{
+if [ -n "$(dpkg -l | grep youtube-dl)" ]; then
+  tria_directori
+else
+    comprova_connexio
+fi
+}
+
+install()
+{
+    sudo apt install youtube-dl -y
+    comprova_programa
+}
+comprova_connexio
