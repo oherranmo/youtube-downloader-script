@@ -1,5 +1,5 @@
 #!/bin/bash
-#Autor: Òscar Herran i Morueco
+#Autor: Òscar Herrán Morueco
 tria_directori()
 {
 DIRECTORI=$(zenity --file-selection --title="Trieu un directori per a la baixada" --directory)
